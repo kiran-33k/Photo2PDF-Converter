@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PhotoPDF - Retro UI</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+    <style>
+        /* --- Color Variables --- */
+        :root {
+            /* Light Mode (Default) */
+            --bg-main: #F8DCD3;
+            --bg-surface: #ffffff;
+            --text-primary: #000000;
+            --border: #000000;
+            --shadow: #000000;
+            
+            --primary-accent: #82AAF2;
+            --secondary-accent: #FB6A4C;
+            
+            --btn-primary-bg: var(--primary-accent);
+            --btn-primary-text: var(--text-primary);
+            --btn-secondary-bg: var(--secondary-accent);
+            --btn-secondary-text: #ffffff;
+            --status-success-bg: var(--primary-accent);
+            --status-success-text: var(--text-primary);
+            --status-error-bg: var(--secondary-accent);
+            --status-error-text: #ffffff;
+        }
+
+        [data-theme="dark"] {
+            /* Dark Mode */
+            --bg-main: #121212;
+            --bg-surface: #1E1E1E;
+            --text-primary: #F0F0F0;
+            --border: #F0F0F0;
+            --shadow: #F0F0F0;
+            
+            /* Accents remain the same */
+            --btn-primary-bg: var(--primary-accent);
+            --btn-primary-text: #000000;
+            --btn-secondary-bg: var(--secondary-accent);
+            --btn-secondary-text: #ffffff;
+            --status-success-bg: var(--primary-accent);
+            --status-success-text: #000000;
+            --status-error-bg: var(--secondary-accent);
+            --status-error-text: #ffffff;
+        }
+
+        /* --- Basic Reset --- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            border-radius: 0;
+        }
+
+        body {
+            font-family: 'Roboto Mono', monospace;
+            background-color: var(--bg-main);
+            color: var(--text-primary);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        /* --- Header Bar --- */
+        .header {
+            width: 100%;
+            max-width: 900px;
+            background: var(--bg-surface);
+            border: 3px solid var(--border);
+            padding: 15px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 8px 8px 0px var(--shadow);
+            transition: all 0.3s ease;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            text-transform: uppercase;
+        }
+
+        .menu-icon {
+            font-size: 1.8rem;
+            color: var(--text-primary);
+            cursor: pointer;
+            font-weight: 700;
+        }
+        
+        /* --- Main App Container --- */
+        .converter-container {
+            width: 100%;
+            max-width: 900px;
+            margin-top: 40px;
+            background: var(--bg-surface);
+            border: 3px solid var(--border);
+            box-shadow: 8px 8px 0px var(--shadow);
+            padding: 30px 35px;
+            animation: popIn 0.3s ease-out;
+            transition: all 0.3s ease;
+        }
+        
+        @keyframes popIn {
+            from { transform: scale(0.95); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        
+        .app-title {
+            text-align: center;
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 30px;
+            text-transform: uppercase;
+            border-bottom: 3px solid var(--border);
+            padding-bottom: 15px;
+        }
+
+        /* --- Form Elements --- */
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 700;
+            font-size: 1rem;
+            color: var(--text-primary);
+            text-transform: uppercase;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 14px;
+            background: var(--bg-surface);
+            border: 3px solid var(--border);
+            font-size: 1.1rem;
+            font-family: 'Roboto Mono', monospace;
+            color: var(--text-primary);
+            transition: all 0.2s ease;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary-accent);
+            box-shadow: 4px 4px 0px var(--primary-accent);
+        }
+
+        /* --- File Input --- */
+        .file-label {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            padding: 16px;
+            background: var(--btn-primary-bg);
+            border: 3px solid var(--border);
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.15s ease-out;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--btn-primary-text);
+            box-shadow: 5px 5px 0px var(--shadow);
+        }
+        .file-label i {
+            margin-right: 12px;
+        }
+        .file-label:hover {
+            transform: translate(2px, 2px);
+            box-shadow: 3px 3px 0px var(--shadow);
+        }
+        .file-label:active {
+            transform: translate(5px, 5px);
+            box-shadow: 0px 0px 0px var(--shadow);
+        }
+
+        #imageInput { display: none; }
+
+        /* --- Preview Area --- */
+        #previewArea {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+            padding: 15px;
+            border: 3px dashed var(--border);
+            min-height: 100px;
+            background: var(--bg-main);
+        }
+
+        /* Wrapper for image and remove button */
+        .preview-image-wrapper {
+            position: relative;
+        }
+
+        .preview-image {
+            width: 100%;
+            height: 100px;
+            object-fit: cover;
+            border: 3px solid var(--border);
+            display: block;
+        }
+
+        /* Remove image button */
+        .remove-image-btn {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 28px;
+            height: 28px;
+            background: var(--secondary-accent);
+            color: var(--btn-secondary-text);
+            border: 3px solid var(--border);
+            font-size: 1.3rem;
+            font-weight: 700;
+            line-height: 1;
+            cursor: pointer;
+            box-shadow: -3px 3px 0 var(--shadow);
+            transition: all 0.15s ease-out;
+        }
+        .remove-image-btn:hover {
+            background: #e35a3f;
+            transform: translate(1px, -1px);
+            box-shadow: -2px 2px 0 var(--shadow);
+        }
+        .remove-image-btn:active {
+            transform: translate(0);
+            box-shadow: none;
+        }
+        
+        /* --- Status Messages --- */
+        #status {
+            text-align: center;
+            margin-top: 20px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            padding: 12px;
+            display: none;
+            border: 3px solid var(--border);
+            text-transform: uppercase;
+        }
+        .status-success {
+            color: var(--status-success-text);
+            background-color: var(--status-success-bg);
+            display: block;
+        }
+        .status-error {
+            color: var(--status-error-text);
+            background-color: var(--status-error-bg);
+            display: block;
+        }
+
+        /* --- Generate Button --- */
+        #generateBtn {
+            width: 100%;
+            padding: 18px;
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--btn-secondary-text);
+            background-color: var(--btn-secondary-bg);
+            border: 3px solid var(--border);
+            cursor: pointer;
+            transition: all 0.15s ease-out;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 30px;
+            box-shadow: 5px 5px 0px var(--shadow);
+            text-transform: uppercase;
+        }
+        #generateBtn:hover {
+            transform: translate(2px, 2px);
+            box-shadow: 3px 3px 0px var(--shadow);
+        }
+        #generateBtn:active {
+            transform: translate(5px, 5px);
+            box-shadow: 0px 0px 0px var(--shadow);
+        }
+        #generateBtn:disabled {
+            background-color: #888;
+            color: #ccc;
+            box-shadow: none;
+            cursor: not-allowed;
+            transform: none;
+            border-color: #555;
+        }
+        
+        /* --- Loader --- */
+        .loader {
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.5);
+            border-top-color: var(--btn-secondary-text);
+            border-radius: 50%;
+            display: inline-block;
+            animation: rotation 0.8s linear infinite;
+            margin-right: 12px;
+        }
+
+        @keyframes rotation {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* --- Overlay --- */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(2px);
+            z-index: 1500;
+            display: none;
+        }
+        .overlay.active {
+            display: block;
+        }
+        
+        /* --- Sidebar --- */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            right: -320px;
+            width: 300px;
+            height: 100%;
+            background: var(--bg-surface);
+            border-left: 3px solid var(--border);
+            z-index: 1600;
+            transition: right 0.3s ease-in-out;
+            display: flex;
+            flex-direction: column;
+        }
+        .sidebar.active {
+            right: 0;
+        }
+        .sidebar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 3px solid var(--border);
+        }
+        .sidebar-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+        .close-btn {
+            font-size: 2rem;
+            font-weight: 700;
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            cursor: pointer;
+        }
+        .sidebar-nav {
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+        }
+        .sidebar-nav a {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            text-decoration: none;
+            padding: 15px;
+            border-bottom: 2px dashed var(--border);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .sidebar-nav a:hover {
+            background: var(--bg-main);
+            color: var(--primary-accent);
+        }
+        .sidebar-nav a i {
+            margin-right: 10px;
+        }
+        .sidebar-nav a .theme-toggle-icon {
+            font-size: 1.5rem;
+        }
+        .login-btn {
+            margin-top: 20px;
+            background: var(--btn-primary-bg);
+            color: var(--btn-primary-text);
+            border: 3px solid var(--border);
+            box-shadow: 4px 4px 0 var(--shadow);
+        }
+        .login-btn:hover {
+            background: var(--btn-primary-bg) !important;
+            color: var(--btn-primary-text) !important;
+        }
+
+        /* --- Modals --- */
+        .modal-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            padding: 20px;
+        }
+        .modal-container.active {
+            display: flex;
+        }
+        .modal-content {
+            background: var(--bg-surface);
+            border: 3px solid var(--border);
+            box-shadow: 8px 8px 0 var(--shadow);
+            padding: 25px;
+            width: 100%;
+            max-width: 500px; /* Developer modal size */
+            position: relative;
+            animation: popIn 0.3s;
+        }
+        
+        /* Smaller size for About modal */
+        .modal-content-small {
+            max-width: 400px;
+        }
+
+        .modal-close-btn {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 2rem;
+            font-weight: 700;
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            cursor: pointer;
+        }
+        .modal-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid var(--border);
+            text-transform: uppercase;
+        }
+        .modal-content p, .modal-content li {
+            font-size: 1rem;
+            font-weight: 500;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+        .modal-content ol {
+            padding-left: 20px;
+        }
+
+        /* Developer Modal Styles */
+        .dev-container {
+            text-align: center;
+        }
+        .dev-photo-wrapper {
+            width: 150px;
+            height: 150px;
+            border: 3px solid var(--border);
+            box-shadow: 5px 5px 0 var(--shadow);
+            margin: 0 auto 20px auto;
+            overflow: hidden;
+            background: var(--primary-accent);
+        }
+        .dev-photo {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        .dev-photo-fallback {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 5rem;
+            color: var(--btn-primary-text);
+            width: 100%;
+            height: 100%;
+        }
+
+        .dev-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--secondary-accent);
+            margin-bottom: 5px !important;
+        }
+        .dev-title, .dev-age {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 5px !important;
+        }
+
+        /* --- Mobile Responsiveness --- */
+        @media (max-width: 600px) {
+            body { padding: 0; }
+            .header, .converter-container {
+                width: 100%;
+                margin-top: 0;
+                box-shadow: none;
+                border-left: none;
+                border-right: none;
+            }
+            .header {
+                padding: 15px 20px;
+                border-top: none;
+            }
+            .converter-container {
+                padding: 25px;
+                border-top: none;
+            }
+            .app-title { font-size: 1.6rem; }
+        }
+        
+    </style>
+</head>
+<body>
+
+    <header class="header">
+        <div class="logo">PhotoPDF</div>
+        <i class="fas fa-bars menu-icon" id="menu-icon" aria-label="Menu"></i>
+    </header>
+
+    <div class="converter-container">
+        
+        <h1 class="app-title">PDF Generator</h1>
+
+        <div class="form-group">
+            <label for="pdfName">PDF File Name</label>
+            <input type="text" id="pdfName" class="form-input" placeholder="FILENAME">
+        </div>
+
+        <div class="form-group">
+            <label for="imageInput">Select Images (Max 5)</label>
+            <label for="imageInput" class="file-label" id="fileLabelText">
+                <i class="fas fa-file-image"></i> Choose Images
+            </label>
+            <input type="file" id="imageInput" accept="image/*" multiple>
+            <div id="previewArea"></div>
+        </div>
+        
+        <div id="status"></div>
+        <button id="generateBtn">
+            <span id="btnText">Generate!</span>
+        </button>
+            
+    </div> 
+    
+    <div class="overlay" id="overlay"></div>
+
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2 class="sidebar-title">Settings</h2>
+            <button class="close-btn" id="close-sidebar-btn">&times;</button>
+        </div>
+        <nav class="sidebar-nav">
+            <a id="theme-toggle-btn">
+                <span><i class="fas fa-sun"></i> Theme</span>
+                <i class="fas fa-toggle-off" id="theme-toggle-icon"></i>
+            </a>
+            <a id="about-btn">
+                <span><i class="fas fa-info-circle"></i> About</span>
+            </a>
+            <a id="developer-btn">
+                <span><i class="fas fa-code"></i> Developer</span>
+            </a>
+            <a href="#" class="login-btn">
+                <span><i class="fas fa-sign-in-alt"></i> Login</span>
+            </a>
+        </nav>
+    </aside>
+
+    <div class="modal-container" id="about-modal">
+        <div class="modal-content modal-content-small">
+            <button class="modal-close-btn" data-target="about-modal">&times;</button>
+            <h2 class="modal-title">About PhotoPDF</h2>
+            <p>A simple, free, client-side tool to convert your images into a single PDF.</p>
+            <h3>How to Use:</h3>
+            <ol>
+                <li>Name your PDF.</li>
+                <li>Choose up to 5 images.</li>
+                <li>Remove wrong images by clicking the 'x'.</li>
+                <li>Click "Generate!".</li>
+            </ol>
+        </div>
+    </div>
+    
+    <div class="modal-container" id="developer-modal">
+        <div class="modal-content">
+            <button class="modal-close-btn" data-target="developer-modal">&times;</button>
+            <h2 class="modal-title">Developer</h2>
+            <div class="dev-container">
+                <div class="dev-photo-wrapper">
+                    <img src="/photoPDF/photos/kiran1.png" alt="Kondasani HimaKiran" class="dev-photo" onerror="this.outerHTML='<div class=&quot;dev-photo-fallback&quot;><i class=&quot;fas fa-user-circle&quot;></i></div>'">
+                </div>
+                <p class="dev-name">Kondasani HimaKiran</p>
+                <p class="dev-title">Software Developer</p>
+                <p class="dev-age">Age: 19</p>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        // --- ROBUST JAVASCRIPT CORE ---
+
+        // Get all DOM elements
+        const pdfNameInput = document.getElementById('pdfName');
+        const imageInput = document.getElementById('imageInput');
+        const fileLabel = document.getElementById('fileLabelText');
+        const previewArea = document.getElementById('previewArea');
+        const generateBtn = document.getElementById('generateBtn');
+        const btnText = document.getElementById('btnText');
+        const statusEl = document.getElementById('status');
+        
+        // App state
+        let selectedFiles = []; // This will hold the File objects
+        const MAX_IMAGES = 5;
+        const { jsPDF } = window.jspdf;
+
+        // --- 1. File Selection and Preview ---
+
+        imageInput.addEventListener('change', (e) => {
+            clearStatus();
+            
+            // Filter for valid image types
+            const newFiles = Array.from(e.target.files).filter(file => {
+                if (!file.type.startsWith('image/')) {
+                    showError(`File "${file.name}" is not an image.`);
+                    return false;
+                }
+                return true;
+            });
+
+            // Check total count
+            if (selectedFiles.length + newFiles.length > MAX_IMAGES) {
+                showError(`Error: Max ${MAX_IMAGES} images total.`);
+                imageInput.value = null; // Reset input
+                return;
+            }
+
+            // Add new files to our state
+            selectedFiles.push(...newFiles);
+            renderPreviewImages();
+            
+            imageInput.value = null; // Reset input to allow re-selecting the same file
+        });
+
+        previewArea.addEventListener('click', (e) => {
+            // Use event delegation to catch clicks on remove buttons
+            if (e.target.classList.contains('remove-image-btn')) {
+                const indexToRemove = parseInt(e.target.dataset.index, 10);
+                selectedFiles.splice(indexToRemove, 1); // Remove from state
+                renderPreviewImages(); // Re-render the UI
+                clearStatus();
+            }
+        });
+
+        /**
+         * Renders the preview images based on the 'selectedFiles' array.
+         */
+        function renderPreviewImages() {
+            previewArea.innerHTML = ''; // Clear preview
+            
+            if (selectedFiles.length === 0) {
+                fileLabel.innerHTML = '<i class="fas fa-file-image"></i> Choose Images';
+                return;
+            }
+
+            fileLabel.innerHTML = `<i class="fas fa-check"></i> ${selectedFiles.length} file(s) selected`;
+
+            selectedFiles.forEach((file, index) => {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'preview-image-wrapper';
+
+                    const img = document.createElement('img');
+                    img.src = event.target.result;
+                    img.className = 'preview-image';
+
+                    const removeBtn = document.createElement('button');
+                    removeBtn.className = 'remove-image-btn';
+                    removeBtn.innerHTML = '&times;';
+                    removeBtn.dataset.index = index; // Set the current index
+                    removeBtn.title = `Remove ${file.name}`; // Accessibility
+
+                    wrapper.appendChild(img);
+                    wrapper.appendChild(removeBtn);
+                    previewArea.appendChild(wrapper);
+                };
+                reader.readAsDataURL(file); // Read file for preview
+            });
+        }
+
+        // --- 2. PDF Generation ---
+
+        generateBtn.addEventListener('click', async () => {
+            clearStatus();
+
+            // --- 2a. Validation ---
+            const fileName = sanitizeFileName(pdfNameInput.value);
+            if (!fileName) {
+                showError('Error: Please enter a valid file name.');
+                return;
+            }
+            if (selectedFiles.length === 0) {
+                showError('Error: Please select at least one image.');
+                return;
+            }
+
+            setLoading(true);
+
+            try {
+                // --- 2b. Process All Images Concurrently ---
+                showStatus(`Processing ${selectedFiles.length} image(s)...`);
+                const imagePromises = selectedFiles.map(processImage);
+                const processedImages = await Promise.all(imagePromises);
+
+                // --- 2c. Create PDF (NEW LOGIC) ---
+                showStatus('Creating PDF document...');
+                
+                // Get dimensions of the first image
+                const firstImage = processedImages[0];
+                
+                // Initialize jsPDF using the first image's dimensions.
+                // We use 'pt' (points) as the unit and treat pixel dimensions as points (1px = 1pt).
+                const doc = new jsPDF({
+                    unit: 'pt',
+                    format: [firstImage.width, firstImage.height]
+                });
+
+                // Add the first image to the first page
+                doc.addImage(firstImage.dataURL, 'PNG', 0, 0, firstImage.width, firstImage.height);
+
+                // --- 2d. Add remaining images on new, custom-sized pages ---
+                for (let i = 1; i < processedImages.length; i++) {
+                    const currentImage = processedImages[i];
+                    
+                    // Add a new page with the exact dimensions of the current image
+                    doc.addPage([currentImage.width, currentImage.height]);
+                    
+                    // Add the current image to fill its new page
+                    doc.addImage(currentImage.dataURL, 'PNG', 0, 0, currentImage.width, currentImage.height);
+                }
+
+                // --- 2e. Save PDF ---
+                doc.save(fileName + '.pdf');
+                showSuccess('Success! PDF Downloaded.');
+                resetForm();
+
+            } catch (error) {
+                console.error("PDF Generation Failed:", error);
+                showError(`Error: ${error.message || 'Could not process images.'}`);
+            } finally {
+                setLoading(false);
+            }
+        });
+
+        /**
+         * Processes a single file.
+         * Reads, loads into an Image, draws to canvas, and exports as PNG dataURL.
+         * This handles ALL image formats the browser can read (GIF, WEBP, SVG, etc.).
+         * @param {File} file - The image file to process.
+         * @returns {Promise<{dataURL: string, width: number, height: number}>}
+         */
+        function processImage(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        try {
+                            const canvas = document.createElement('canvas');
+                            const ctx = canvas.getContext('2d');
+                            canvas.width = img.width;
+                            canvas.height = img.height;
+                            
+                            ctx.drawImage(img, 0, 0);
+                            
+                            const dataURL = canvas.toDataURL('image/png');
+                            
+                            resolve({ dataURL, width: img.width, height: img.height });
+                        } catch (canvasError) {
+                            reject(new Error(`Canvas error processing ${file.name}: ${canvasError.message}`));
+                        }
+                    };
+                    img.onerror = () => reject(new Error(`Could not load image: ${file.name}`));
+                    img.src = e.target.result;
+                };
+                reader.onerror = () => reject(new Error(`Could not read file: ${file.name}`));
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // --- 3. Helper Functions ---
+
+        /**
+         * Sanitizes a string for use as a file name.
+         */
+        function sanitizeFileName(name) {
+            let sanitized = name.trim();
+            sanitized = sanitized.replace(/[\/\\?%*:|"<>.]/g, '_'); // Replace illegal characters
+            sanitized = sanitized.replace(/__+/g, '_'); // Compact multiple underscores
+            if (sanitized.length === 0) return 'photopdf_document';
+            return sanitized;
+        }
+
+        /**
+         * Puts the UI into a loading state.
+         */
+        function setLoading(isLoading) {
+            generateBtn.disabled = isLoading;
+            imageInput.disabled = isLoading;
+            pdfNameInput.disabled = isLoading;
+
+            // Disable all remove buttons
+            document.querySelectorAll('.remove-image-btn').forEach(btn => {
+                btn.disabled = isLoading;
+            });
+
+            if (isLoading) {
+                btnText.textContent = 'Generating...';
+                const spinner = document.createElement('span');
+                spinner.className = 'loader';
+                generateBtn.prepend(spinner);
+            } else {
+                btnText.textContent = 'Generate!';
+                const spinner = generateBtn.querySelector('.loader');
+                if (spinner) spinner.remove();
+            }
+        }
+
+        function showStatus(message) {
+            statusEl.textContent = message;
+            statusEl.className = ''; // Neutral status
+            statusEl.style.display = 'block';
+        }
+
+        function showError(message) {
+            statusEl.textContent = message;
+            statusEl.className = 'status-error';
+            statusEl.style.display = 'block';
+        }
+
+        function showSuccess(message) {
+            statusEl.textContent = message;
+            statusEl.className = 'status-success';
+            statusEl.style.display = 'block';
+        }
+
+        function clearStatus() {
+            statusEl.textContent = '';
+            statusEl.style.display = 'none';
+        }
+
+        function resetForm() {
+            pdfNameInput.value = '';
+            selectedFiles = [];
+            renderPreviewImages(); // Use render function to clear
+        }
+
+        
+        // --- 4. Sidebar, Modal, and Theme Logic (Unchanged) ---
+
+        const menuIcon = document.getElementById('menu-icon');
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('overlay');
+        const closeSidebarBtn = document.getElementById('close-sidebar-btn');
+        const themeToggleBtn = document.getElementById('theme-toggle-btn');
+        const themeToggleIcon = document.getElementById('theme-toggle-icon');
+        const aboutBtn = document.getElementById('about-btn');
+        const developerBtn = document.getElementById('developer-btn');
+        const aboutModal = document.getElementById('about-modal');
+        const developerModal = document.getElementById('developer-modal');
+        const modalCloseBtns = document.querySelectorAll('.modal-close-btn');
+
+        function openSidebar() {
+            sidebar.classList.add('active');
+            overlay.classList.add('active');
+        }
+        function closeSidebar() {
+            sidebar.classList.remove('active');
+            overlay.classList.remove('active');
+        }
+        menuIcon.addEventListener('click', openSidebar);
+        closeSidebarBtn.addEventListener('click', closeSidebar);
+
+        function openModal(modal) {
+            modal.classList.add('active');
+            overlay.classList.add('active');
+            closeSidebar();
+        }
+        function closeModal() {
+            aboutModal.classList.remove('active');
+            developerModal.classList.remove('active');
+            overlay.classList.remove('active');
+        }
+        aboutBtn.addEventListener('click', () => openModal(aboutModal));
+        developerBtn.addEventListener('click', () => openModal(developerModal));
+        modalCloseBtns.forEach(btn => btn.addEventListener('click', closeModal));
+        overlay.addEventListener('click', () => {
+            closeSidebar();
+            closeModal();
+        });
+
+        function setTheme(theme) {
+            if (theme === 'dark') {
+                document.body.dataset.theme = 'dark';
+                themeToggleIcon.classList.remove('fa-toggle-off');
+                themeToggleIcon.classList.add('fa-toggle-on');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                document.body.dataset.theme = 'light';
+                themeToggleIcon.classList.remove('fa-toggle-on');
+                themeToggleIcon.classList.add('fa-toggle-off');
+                localStorage.setItem('theme', 'light');
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            setTheme(savedTheme);
+        });
+
+        themeToggleBtn.addEventListener('click', () => {
+            const currentTheme = document.body.dataset.theme || 'light';
+            if (currentTheme === 'light') {
+                setTheme('dark');
+            } else {
+                setTheme('light');
+            }
+        });
+
+    </script>
+</body>
+</html>
